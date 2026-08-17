@@ -98,7 +98,7 @@ Things that took more thought than the feature list suggests:
 
 **The WebSocket knows when to sleep.** It disconnects when the app is backgrounded so the server stops treating the rider as present and resumes sending push notifications instead — *unless* a ride is live, when the map has to keep updating from the background.
 
-**Live location is ephemeral by design.** Positions are broadcast to the pack, not stored, so the app never accumulates a location history of where anyone has been.
+**Location is one position, not a history.** A rider's position is broadcast to the pack live, and exactly one last-known position is stored per rider per ride — overwritten on every update, wiped when the ride ends. That's enough to answer "where were they last, and how long ago", which is what a safety feature needs; a trail of everywhere someone has been is a different product with different obligations, so the app doesn't keep one. Writes are also throttled well below the broadcast rate, because the map wants every update and the database doesn't.
 
 ---
 
