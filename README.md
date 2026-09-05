@@ -102,6 +102,18 @@ Things that took more thought than the feature list suggests:
 
 ---
 
+## If you're testing this
+
+**Clearing app data logs you out and loses anything that hadn't sent yet.** Your messages themselves are safe — they live on the server, and reopening a chat pulls its history back down. But a message that *failed* to send is only ever on your phone, so clearing data throws it away for good. Worth knowing because clearing data is the first thing most people try when an app misbehaves.
+
+**Message search only finds what your phone has already received.** Chats are cached on the device and searched there, the same way WhatsApp does it — so right after installing, or after clearing data, search comes up empty until you have opened a few conversations. It fills in as you use the app.
+
+**Some screens will look empty at first, and that is the app working correctly.** Rides, posts and roads are all made by riders, so on day one there aren't any — they fill in as people use it. Petrol pumps are already there and cover Delhi NCR, and they extend themselves to new cities automatically as riders reach them.
+
+**Location is asked for in context, never on launch.** If you say no, the map still works — you just lose "near me" ordering and the nearest-fuel pins. You can turn it on later from the Fuel chip on the map.
+
+---
+
 ## Notes
 
 Source is private — happy to walk through the code or the architecture on request.
