@@ -8,7 +8,7 @@ Built solo: Android app, backend, and infrastructure.
 
 ## Download
 
-**[⬇️ Download the latest APK](https://drive.google.com/file/d/1z9PNCJUBZMWw_EwMV_dZFxtIx7xjHUqf/view?usp=sharing)** · v1.1.0 · Android 7.0+
+**[⬇️ Download the latest APK](https://drive.google.com/file/d/17RRqNh-6pAOXQkNFVTK95fLY5xXUdAZn/view?usp=sharing)** · v1.1.0 · Android 7.0+
 
 Android will warn you about installing an app from outside the Play Store — that's expected for a direct APK. Tap **More details → Install anyway**.
 
