@@ -14,65 +14,47 @@ Android will warn you about installing an app from outside the Play Store — th
 
 ---
 
-## Screenshots
-
-<table>
-  <tr>
-    <td align="center" width="33%">
-      <img src="screenshots/for-you.png" width="240" alt="For You feed"><br>
-      <sub><b>Discover</b><br>Rides, routes and riders near you</sub>
-    </td>
-    <td align="center" width="33%">
-      <img src="screenshots/ride-details.png" width="240" alt="Ride details"><br>
-      <sub><b>Plan</b><br>Route, waypoints, riders, expected duration</sub>
-    </td>
-    <td align="center" width="33%">
-      <img src="screenshots/live-tracking.png" width="240" alt="Live pack tracking"><br>
-      <sub><b>Ride</b><br>Live pack tracking, regroups, SOS</sub>
-    </td>
-  </tr>
-  <tr>
-    <td align="center" width="33%">
-      <img src="screenshots/ride-chat.png" width="240" alt="Ride chat"><br>
-      <sub><b>Talk</b><br>Per-ride chat with photos, voice notes, replies</sub>
-    </td>
-    <td align="center" width="33%">
-      <img src="screenshots/groups.png" width="240" alt="Groups"><br>
-      <sub><b>Clubs</b><br>Riding groups with their own chat</sub>
-    </td>
-    <td align="center" width="33%">
-      <img src="screenshots/profile.png" width="240" alt="Rider profile"><br>
-      <sub><b>Profile</b><br>Your garage, your rides, your posts</sub>
-    </td>
-  </tr>
-</table>
-
----
-
 ## What it does
 
 **Ride coordination — the core of it**
 - Plan a ride with a real route: start, waypoints, destination, round trip with a layover, and an expected duration pulled from the actual routing
 - Public, private (host approves) or invite-only, with join requests, direct invites and a rider cap
+- The host can re-pick the route, the start or the destination after publishing — everyone who joined is told what changed
 - **Live pack tracking** — see where everyone is on the map while the ride is on, so nobody gets lost at a junction
-- **Regroup calls** — any rider can drop a "everyone stop here" pin for fuel, food or a break
+- **Regroup calls** — any rider can drop an "everyone stop here" pin for fuel, food or a break
 - **Rider statuses** — "I've stopped to refuel, keep going, I'll catch up", so the pack never has to guess why someone dropped off the back
 - **SOS** — one button that puts your location in front of everyone on the ride
 - **Offline maps** — download a ride's route tiles before you leave, for the stretches with no signal
 - Solo rides, a recap with photos afterwards, and host ratings
 
+**The map**
+- Rides, and rider-submitted places by category — cafés, viewpoints, bike shops, rest stops
+- **Petrol pumps**, from OpenStreetMap, filtered down to stations that actually sell petrol rather than CNG-only outlets. Coverage extends itself to new cities as riders reach them
+- Your own upcoming rides, marked apart from everyone else's
+- Places you have actually ridden to, marked as visited
+- Highways labelled, and a road hierarchy you can read at speed
+
 **Chat that belongs to the ride**
 - A chat per ride and per club, with replies, @mentions, read receipts and per-message info
 - Photos and videos (multi-select, with an HD toggle), voice notes, and one-tap location sharing
 - A media gallery per chat, unsend, host-only mode, and pinned announcements
+- Search your own messages on the device, the way WhatsApp does it
 - Works offline from a local cache, and survives a dropped connection without duplicating what you sent
 
 **The community around it**
-- Posts with photo carousels and reels, comments, likes, saves and hashtags
-- Follow riders, add crew, join clubs, RSVP to events
+- A home feed of the riders you follow, with suggestions filling in behind it while your follow list is still short
+- A discovery tab: search for riders, and a grid of everything posted
+- Posts with photo carousels and reels, likes, saves and hashtags
+- **Comments**, one level of replies deep, where you can tag another rider and they get told
+- Follow riders, add ride buddies, join clubs, RSVP to events
 - Rider-submitted destinations — cafés, viewpoints and meet spots that end up as routes other people ride
-- Brand partnerships and paid-collab disclosure for riders who create content
+- Achievements that track distance ridden, and a notifications history rather than a banner you can miss
 - Reporting, blocking and an admin moderation queue
+
+**For brands**
+- Verified brand accounts, applied for through a partners page and approved by hand
+- Brand-hosted events — track days, riding experiences — carried at the top of the discovery tab with RSVPs
+- Paid-collab offers between brands and riders, with disclosure on any post that carries one
 
 ---
 
@@ -82,7 +64,7 @@ Android will warn you about installing an app from outside the Play Store — th
 
 **Backend** — Spring Boot 3.5 · Java 23 · PostgreSQL · JWT auth · WebSocket/STOMP for live location and chat · Cloudinary for media · Expo Push
 
-**Infrastructure** — Render (Singapore) · Neon Postgres (Singapore) · 550+ backend tests
+**Infrastructure** — Render (Singapore) · Neon Postgres (Singapore) · 740 backend tests
 
 ---
 
@@ -100,6 +82,10 @@ Things that took more thought than the feature list suggests:
 
 **Location is one position, not a history.** A rider's position is broadcast to the pack live, and exactly one last-known position is stored per rider per ride — overwritten on every update, wiped when the ride ends. That's enough to answer "where were they last, and how long ago", which is what a safety feature needs; a trail of everywhere someone has been is a different product with different obligations, so the app doesn't keep one. Writes are also throttled well below the broadcast rate, because the map wants every update and the database doesn't.
 
+**The database sleeps when nobody is riding.** Seven background jobs poll for rides that need attention — start reminders, auto-completion, pack checks. On serverless Postgres, billed per awake minute, that meant the database never slept and a month's quota went in under three weeks. All seven now sit behind one cached "is any ride actually pending?" check, invalidated by an entity listener whenever a ride is written, so the pollers can't drift out of step with it. Idle costs nothing; a live ride is unaffected.
+
+**Telling a petrol pump from a CNG station is harder than it looks.** Fuel stops are imported from OpenStreetMap, where `amenity=fuel` covers petrol, CNG, LPG and EV charging alike. The obvious filter — trust the `fuel:petrol` tag — fails: only 10 of 464 stations around Delhi carried that tag at all, so its absence proves nothing, and filtering on it flagged an Indian Oil forecourt as gas-only. Brand and name turned out to be the reliable signal, with positive evidence of petrol always winning, because plenty of real stations sell both.
+
 ---
 
 ## If you're testing this
@@ -108,7 +94,9 @@ Things that took more thought than the feature list suggests:
 
 **Message search only finds what your phone has already received.** Chats are cached on the device and searched there, the same way WhatsApp does it — so right after installing, or after clearing data, search comes up empty until you have opened a few conversations. It fills in as you use the app.
 
-**Some screens will look empty at first, and that is the app working correctly.** Rides, posts and roads are all made by riders, so on day one there aren't any — they fill in as people use it. Petrol pumps are already there and cover Delhi NCR, and they extend themselves to new cities automatically as riders reach them.
+**The home feed is people you follow.** Follow nobody and it fills with suggested posts instead, marked as such — you are not missing anything, there just isn't a graph yet. The discovery tab is where you go to find riders to follow.
+
+**Some screens will look empty at first, and that is the app working correctly.** Rides, posts and roads are all made by riders, so on day one there aren't any — they fill in as people use it. Events are hosted by brands, so that shelf stays quiet until one posts. Petrol pumps are already there and cover Delhi NCR, and they extend themselves to new cities automatically as riders reach them.
 
 **Location is asked for in context, never on launch.** If you say no, the map still works — you just lose "near me" ordering and the nearest-fuel pins. You can turn it on later from the Fuel chip on the map.
 
